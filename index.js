@@ -1,9 +1,14 @@
 const express = require('express')
+const dotenv = require('dotenv')
+const cors = require('cors')
+dotenv.config()
 const app = express()
 const { MongoClient, ServerApiVersion } = require('mongodb');
-const uri = "mongodb+srv://Petshop:HxQycRgwIL0TxilS@cluster0.xgil6mh.mongodb.net/?appName=Cluster0";
+const uri = process.env.MONGODB_URI
 
-const PORT = 5000
+const PORT = process.env.PORT 
+app.use(cors())
+app.use(express.json())
 
 //creating client 
 const client = new MongoClient(uri, {
@@ -17,14 +22,31 @@ const client = new MongoClient(uri, {
 //mongo function 
 async function run() {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
+  
     await client.connect();
-    // Send a ping to confirm a successful connection
+  // here creating the database and connect it to the add pets 
+
+   const db = client.db("petDB");
+   const petsCollection = db.collection("pets");
+   //creation api for add pet
+  app.post('/add-pet', async (req, res) => {
+const petdata = req.body;
+console.log(petdata)
+   petsCollection.insertOne(petdata)
+   const result = await petsCollection.insertOne(petdata);
+    res.send(result)
+
+  })
+
+
+
+
+ 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
-    await client.close();
+    //await client.close();
   }
 }
 run().catch(console.dir);
