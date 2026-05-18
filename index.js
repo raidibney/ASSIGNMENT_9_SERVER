@@ -28,7 +28,17 @@ async function run() {
 
    const db = client.db("petDB");
    const petsCollection = db.collection("pets");
-   //creation api for add pet
+
+// here is the get api 
+app.get('/add-pet', async (req, res) => {
+
+  const result = await petsCollection.find().toArray();
+  res.json(result);
+})
+
+
+
+   //creation api for add pet getttttt
   app.post('/add-pet', async (req, res) => {
 const petdata = req.body;
 console.log(petdata)
