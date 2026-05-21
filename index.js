@@ -12,10 +12,9 @@ const uri = process.env.MONGODB_URI;
 // --- CRITICAL FIX: CORS Configuration ---
 // Must be configured to allow credentials (cookies) from your frontend
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: process.env.ALLOWED_ORIGIN , // Fallback for safety
   credentials: true
 }));
-
 app.use(express.json());
 
 // Creating client 
