@@ -9,12 +9,25 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const uri = process.env.MONGODB_URI;
 
-// --- CRITICAL FIX: CORS Configuration ---
-// Must be configured to allow credentials (cookies) from your frontend
+// --- FIXED: CORS Configuration ---
+// Explicitly allowing your Vercel frontend URL
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://assignment-9-brown-tau.vercel.app'
+];
+
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGIN , // Fallback for safety
+  origin: function (origin, callback) {
+    // allow requests with no origin (like mobile apps or curl requests)
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
+
 app.use(express.json());
 
 // Creating client 
@@ -29,6 +42,8 @@ const client = new MongoClient(uri, {
 // Mongo function 
 async function run() {
   try {
+    // Connect the client to the server
+    await client.connect();
     const db = client.db("petDB");
     const petsCollection = db.collection("pets");
     const requestsCollection = db.collection("requests");
@@ -40,19 +55,16 @@ async function run() {
     });
 
     // 2. POST API - Create/Add a pet
-   // 2. POST API - Create/Add a pet
-app.post('/add-pet', async (req, res) => {
-  const petdata = req.body;
-  console.log("Received data from frontend:", petdata); // ADD THIS LINE
-
-  try {
-    const result = await petsCollection.insertOne(petdata);
-    res.status(201).json(result);
-  } catch (error) {
-    console.error("Database insert error:", error);
-    res.status(500).json({ message: "Failed to save to database" });
-  }
-});
+    app.post('/add-pet', async (req, res) => {
+      const petdata = req.body;
+      try {
+        const result = await petsCollection.insertOne(petdata);
+        res.status(201).json(result);
+      } catch (error) {
+        console.error("Database insert error:", error);
+        res.status(500).json({ message: "Failed to save to database" });
+      }
+    });
 
     // 3. GET API - Details page data
     app.get('/add-pet/:id', async (req, res) => {
@@ -101,27 +113,21 @@ app.post('/add-pet', async (req, res) => {
     app.post('/adoption-requests', async (req, res) => {
       try {
         const requestData = req.body;
-        
-        // Security check
         if (!requestData.userEmail) {
             return res.status(401).json({ message: "Unauthorized: No user session" });
         }
-
         const existingRequest = await requestsCollection.findOne({
           petId: requestData.petId,
           userEmail: requestData.userEmail
         });
-
         if (existingRequest) {
           return res.status(400).json({ message: "You have already requested this pet!" });
         }
-
         const result = await requestsCollection.insertOne({
           ...requestData,
           status: "Pending",
           createdAt: new Date()
         });
-        
         res.status(201).json({ success: true, result });
       } catch (error) {
         res.status(500).json({ message: "Server error processing request" });
@@ -141,8 +147,8 @@ app.post('/add-pet', async (req, res) => {
     });
 
     console.log("Successfully connected to MongoDB!");
-  } finally {
-    // Keep connection open for the server
+  } catch (error) {
+    console.error("Failed to connect to MongoDB:", error);
   }
 }
 
