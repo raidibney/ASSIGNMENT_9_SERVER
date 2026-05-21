@@ -10,7 +10,6 @@ const PORT = process.env.PORT || 5000;
 const uri = process.env.MONGODB_URI;
 
 // --- FIXED: CORS Configuration ---
-// Explicitly allowing your Vercel frontend URL
 const allowedOrigins = [
   'http://localhost:3000',
   'https://assignment-9-brown-tau.vercel.app'
@@ -18,7 +17,6 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    // allow requests with no origin (like mobile apps or curl requests)
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
@@ -42,20 +40,19 @@ const client = new MongoClient(uri, {
 // Mongo function 
 async function run() {
   try {
-    // Connect the client to the server
     await client.connect();
     const db = client.db("petDB");
     const petsCollection = db.collection("pets");
     const requestsCollection = db.collection("requests");
 
-    // 1. GET API - Fetch all pets
-    app.get('/add-pet', async (req, res) => {
+    // 1. GET API - Fetch all pets (Updated to /add-pets)
+    app.get('/add-pets', async (req, res) => {
       const result = await petsCollection.find().toArray();
       res.json(result);
     });
 
-    // 2. POST API - Create/Add a pet
-    app.post('/add-pet', async (req, res) => {
+    // 2. POST API - Create/Add a pet (Updated to /add-pets)
+    app.post('/add-pets', async (req, res) => {
       const petdata = req.body;
       try {
         const result = await petsCollection.insertOne(petdata);
@@ -66,8 +63,8 @@ async function run() {
       }
     });
 
-    // 3. GET API - Details page data
-    app.get('/add-pet/:id', async (req, res) => {
+    // 3. GET API - Details page data (Updated to /add-pets/:id)
+    app.get('/add-pets/:id', async (req, res) => {
       try {
         const { id } = req.params;
         const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { _id: id };
@@ -79,8 +76,8 @@ async function run() {
       }
     });
 
-    // 4. PUT API - Edit/Update pet details
-    app.put('/add-pet/:id', async (req, res) => {
+    // 4. PUT API - Edit/Update pet details (Updated to /add-pets/:id)
+    app.put('/add-pets/:id', async (req, res) => {
       try {
         const { id } = req.params;
         const updatedData = req.body;
@@ -96,8 +93,8 @@ async function run() {
       }
     });
 
-    // 5. DELETE API - Remove pet
-    app.delete('/add-pet/:id', async (req, res) => {
+    // 5. DELETE API - Remove pet (Updated to /add-pets/:id)
+    app.delete('/add-pets/:id', async (req, res) => {
       try {
         const { id } = req.params;
         const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { _id: id };
