@@ -11,8 +11,7 @@ const uri = process.env.MONGODB_URI;
 
 // --- FIXED: CORS Configuration ---
 const allowedOrigins = [
-  'http://localhost:3000',
-  'https://assignment-9-brown-tau.vercel.app'
+  'http://localhost:3000'
 ];
 
 app.use(cors({
@@ -45,13 +44,13 @@ async function run() {
     const petsCollection = db.collection("pets");
     const requestsCollection = db.collection("requests");
 
-    // 1. GET API - Fetch all pets (Updated to /add-pets)
+    // 1. GET API - Fetch all pets
     app.get('/add-pets', async (req, res) => {
       const result = await petsCollection.find().toArray();
       res.json(result);
     });
 
-    // 2. POST API - Create/Add a pet (Updated to /add-pets)
+    // 2. POST API - Create/Add a pet
     app.post('/add-pets', async (req, res) => {
       const petdata = req.body;
       try {
@@ -63,7 +62,7 @@ async function run() {
       }
     });
 
-    // 3. GET API - Details page data (Updated to /add-pets/:id)
+    // 3. GET API - Details page data
     app.get('/add-pets/:id', async (req, res) => {
       try {
         const { id } = req.params;
@@ -76,7 +75,7 @@ async function run() {
       }
     });
 
-    // 4. PUT API - Edit/Update pet details (Updated to /add-pets/:id)
+    // 4. PUT API - Edit/Update pet details
     app.put('/add-pets/:id', async (req, res) => {
       try {
         const { id } = req.params;
@@ -93,7 +92,7 @@ async function run() {
       }
     });
 
-    // 5. DELETE API - Remove pet (Updated to /add-pets/:id)
+    // 5. DELETE API - Remove pet
     app.delete('/add-pets/:id', async (req, res) => {
       try {
         const { id } = req.params;
@@ -106,13 +105,20 @@ async function run() {
       }
     });
 
-    // 6. POST API - Submit adoption request
+    // 6. POST API - Submit adoption request (UPDATED WITH OWNER VALIDATION)
     app.post('/adoption-requests', async (req, res) => {
       try {
         const requestData = req.body;
         if (!requestData.userEmail) {
             return res.status(401).json({ message: "Unauthorized: No user session" });
         }
+
+        // SECURITY CHECK: Ensure user is not the owner of the pet
+        const pet = await petsCollection.findOne({ _id: new ObjectId(requestData.petId) });
+        if (pet && pet.ownerEmail === requestData.userEmail) {
+          return res.status(403).json({ message: "You cannot request your own pet!" });
+        }
+
         const existingRequest = await requestsCollection.findOne({
           petId: requestData.petId,
           userEmail: requestData.userEmail
@@ -120,6 +126,7 @@ async function run() {
         if (existingRequest) {
           return res.status(400).json({ message: "You have already requested this pet!" });
         }
+
         const result = await requestsCollection.insertOne({
           ...requestData,
           status: "Pending",
@@ -140,6 +147,17 @@ async function run() {
         res.json(result);
       } catch (error) {
         res.status(500).json({ message: "Server error" });
+      }
+    });
+
+    // 8. GET API - Fetch pets by owner email
+    app.get('/my-pets/:email', async (req, res) => {
+      try {
+        const { email } = req.params;
+        const result = await petsCollection.find({ ownerEmail: email }).toArray();
+        res.json(result);
+      } catch (error) {
+        res.status(500).json({ message: "Server error fetching your listings" });
       }
     });
 
