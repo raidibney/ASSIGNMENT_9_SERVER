@@ -16,7 +16,7 @@ const uri = process.env.MONGODB_URI;
 
 // --- FIXED: CORS Configuration ---
 const allowedOrigins = [
-  'http://localhost:3000'
+  'http://localhost:3000','https://pawsomeadoptfrontend.vercel.app'
 ];
 
 app.use(cors({
