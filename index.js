@@ -1,3 +1,8 @@
+
+const dns = require("node:dns");
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
+
+
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
@@ -27,6 +32,30 @@ app.use(cors({
 
 app.use(express.json());
 
+//doing this for getting the tokeennnnnn/\.................................
+
+app.use((req, res, next) => {
+  const cookieHeader = req.headers.cookie;
+  
+  if (cookieHeader) {
+    // 1. Convert the cookie string into a simple object
+    const cookies = cookieHeader.split('; ').reduce((acc, cookie) => {
+      const [key, value] = cookie.split('=');
+      acc[key] = value;
+      return acc;
+    }, {});
+
+    // 2. Check if the specific cookie exists and print it
+    if (cookies["better-auth.session_data"]) {
+      console.log("--- Only Better Auth Data ---");
+      console.log(cookies["better-auth.session_data"]);
+    }
+  }
+  next();
+});
+
+//end of token block..................................................
+
 // Creating client
 const client = new MongoClient(uri, {
   serverApi: {
@@ -39,7 +68,7 @@ const client = new MongoClient(uri, {
 // Mongo function
 async function run() {
   try {
-    await client.connect();
+   // await client.connect();  this is the code that i am commenting out fot the deploy 
 
     const db = client.db("petDB");
 
